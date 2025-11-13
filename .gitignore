@@ -1,7 +1,7 @@
-# Private keys - should not be committed
-*_key.pem
-*.key
+# Exclude downloaded collision tools and repositories
+md5_collision_lab/
 
-# Temporary files
+# Exclude temporary files
 *.tmp
-*.bak
+*.swp
+*~
