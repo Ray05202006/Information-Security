@@ -1,0 +1,5 @@
+array_start=12320
+array_end=12520
+collision_start=12352
+collision_end=12480
+prefix_len=12352
