@@ -1,0 +1,147 @@
+====================================================================
+DIFFIE-HELLMAN PUBLIC KEY SIZE ANALYSIS - RESULTS SUMMARY
+====================================================================
+
+Environment:
+- OpenSSL Version: 3.0.13 (30 Jan 2024)
+- Platform: Linux
+- Date: 2025-11-13
+
+====================================================================
+COMPLETE RESULTS TABLE
+====================================================================
+
+Group Name      | Type        | Bit Size | Public Key (bytes) | Ratio
+----------------|-------------|----------|-------------------|-------
+custom_512      | Custom      |      512 |               157 | 2.45
+custom_1024     | Custom      |     1024 |               291 | 2.27
+modp_1536       | RFC 3526    |     1536 |               420 | 2.18
+modp_2048       | RFC 3526    |     2048 |               552 | 2.15
+ffdhe2048       | RFC 7919    |     2048 |               553 | 2.16
+modp_3072       | RFC 3526    |     3072 |               808 | 2.10
+ffdhe3072       | RFC 7919    |     3072 |               808 | 2.10
+modp_4096       | RFC 3526    |     4096 |              1064 | 2.07
+ffdhe4096       | RFC 7919    |     4096 |              1064 | 2.07
+modp_6144       | RFC 3526    |     6144 |              1576 | 2.05
+ffdhe6144       | RFC 7919    |     6144 |              1576 | 2.05
+modp_8192       | RFC 3526    |     8192 |              2089 | 2.04
+ffdhe8192       | RFC 7919    |     8192 |              2088 | 2.03
+
+Note: Ratio = Public Key Size (bytes) / (Bit Size / 8)
+
+====================================================================
+KEY OBSERVATIONS
+====================================================================
+
+1. PUBLIC KEY SIZE RELATIONSHIP:
+   - Public key size ≈ 2 × (bit_size / 8) + DER_overhead
+   - DER overhead ≈ 30-50 bytes (decreases relatively with larger keys)
+
+2. WHY 2× THE BIT SIZE?
+   DH public keys contain TWO major components:
+   a) Parameters: prime p (~bit_size)
+   b) Public value: y = g^x mod p (~bit_size)
+   Total ≈ 2 × bit_size
+
+3. FFDHE vs MODP:
+   - Same bit size → nearly identical public key size
+   - Main differences are in prime number generation
+   - FFDHE (RFC 7919) is recommended for modern applications
+   - MODP (RFC 3526) used for backward compatibility
+
+4. SECURITY RECOMMENDATIONS:
+   - Minimum: 2048 bits
+   - Recommended: 3072 bits
+   - ≤1536 bits: INSECURE, do not use
+
+====================================================================
+OPENSSL COMMANDS USED
+====================================================================
+
+1. GENERATE NAMED GROUP PARAMETERS:
+   openssl genpkey -genparam -algorithm DH \
+       -pkeyopt dh_param:ffdhe2048 -out ffdhe2048.pem
+
+2. GENERATE CUSTOM PARAMETERS:
+   openssl genpkey -genparam -algorithm DH \
+       -pkeyopt dh_paramgen_prime_len:2048 -out custom_2048.pem
+
+3. VIEW PARAMETERS:
+   openssl pkeyparam -in ffdhe2048.pem -text -noout
+
+4. GENERATE KEY PAIR:
+   openssl genpkey -paramfile ffdhe2048.pem -out ffdhe2048_key.pem
+
+5. VIEW KEY DETAILS:
+   openssl pkey -in ffdhe2048_key.pem -text -noout
+
+6. EXPORT PUBLIC KEY (DER):
+   openssl pkey -in ffdhe2048_key.pem -pubout \
+       -outform DER -out ffdhe2048_pubkey.der
+
+7. ANALYZE DER STRUCTURE:
+   openssl asn1parse -in ffdhe2048_pubkey.der -inform DER
+
+====================================================================
+AVAILABLE DH GROUPS IN OPENSSL 3.0.13
+====================================================================
+
+RFC 7919 FFDHE Groups (Recommended):
+  - ffdhe2048  (2048 bits)
+  - ffdhe3072  (3072 bits)
+  - ffdhe4096  (4096 bits)
+  - ffdhe6144  (6144 bits)
+  - ffdhe8192  (8192 bits)
+
+RFC 3526 MODP Groups (Legacy):
+  - modp_1536  (1536 bits) - INSECURE
+  - modp_2048  (2048 bits)
+  - modp_3072  (3072 bits)
+  - modp_4096  (4096 bits)
+  - modp_6144  (6144 bits)
+  - modp_8192  (8192 bits)
+
+Custom Parameters:
+  - Any bit length using dh_paramgen_prime_len option
+  - Generation time increases significantly with bit size
+
+====================================================================
+DER STRUCTURE (Example: ffdhe2048)
+====================================================================
+
+SEQUENCE (549 bytes total)
+  ├─ SEQUENCE (Algorithm Identifier, 279 bytes)
+  │  ├─ OBJECT IDENTIFIER: dhKeyAgreement (1.2.840.113549.1.3.1)
+  │  └─ SEQUENCE (DH Parameters)
+  │     ├─ INTEGER: p (prime, 257 bytes / 2048 bits)
+  │     └─ INTEGER: g (generator, 1 byte, value=2)
+  └─ BIT STRING (Public Key Value, 262 bytes)
+     └─ INTEGER: y = g^x mod p (~2048 bits)
+
+Components:
+- Prime modulus p: 2048 bits = 256 bytes (+ 1 byte padding) = 257 bytes
+- Generator g: 1 byte (usually 2 or 5)
+- Public key y: ~2048 bits ≈ 256 bytes
+- DER overhead: ~35 bytes (structure tags, lengths, OID)
+- Total: 257 + 1 + 256 + 35 = 549 bytes ✓
+
+====================================================================
+FORMULA
+====================================================================
+
+Public Key Size (bytes) ≈ 2 × (bit_size / 8) + overhead
+
+Where:
+- bit_size: Size of prime modulus p
+- First term: Parameters (mostly prime p)
+- Second term: Public key value y
+- overhead: DER encoding structure (~30-50 bytes)
+
+For 2048-bit DH:
+  ≈ 2 × (2048 / 8) + 40
+  ≈ 2 × 256 + 40
+  ≈ 552 bytes ✓ (observed: 552-553 bytes)
+
+====================================================================
+END OF SUMMARY
+====================================================================

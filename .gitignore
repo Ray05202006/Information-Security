@@ -1,0 +1,7 @@
+# Private keys - should not be committed
+*_key.pem
+*.key
+
+# Temporary files
+*.tmp
+*.bak
